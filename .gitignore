@@ -1,0 +1,37 @@
+# Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+bin/
+obj/
+.vs/
+
+# User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Logs
+*.log
+
+# Visual Studio Code
+.vscode/
+
+# Rider files
+.idea/
+
+# NuGet packages
+*.nupkg
+packages/
+
+# Database
+*.mdf
+*.ldf
+*.sqlite
+
+# OS generated files
+.DS_Store
+Thumbs.db
