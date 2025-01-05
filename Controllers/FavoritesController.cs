@@ -1,4 +1,5 @@
 ﻿using BL.Interfaces;
+using BL.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Models;
@@ -10,39 +11,46 @@ namespace GitRepositoriesApi.Controllers
     public class FavoriteController : ControllerBase
     {
         private readonly IFavoriteService _FavoriteService;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public FavoriteController(IFavoriteService FavoriteService)
+        public FavoriteController(IFavoriteService FavoriteService, IHttpContextAccessor httpContextAccessor)
         {
             _FavoriteService = FavoriteService;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         [Authorize]
-        [HttpPost("AddToFavorite")]
-        public async Task<IActionResult> AddToFavorite([FromBody] GitHubRepository favorite)
+        [HttpPost("AddToBookmark")]
+        public async Task<IActionResult> AddToBookmark([FromBody] GitHubRepository favorite)
         {
             if (favorite == null)
-                return BadRequest("Invalid data for favorite");
+                return BadRequest("Invalid data for Bookmark");
 
-            try
-            {
-                await _FavoriteService.AddFavoriteAsync(favorite);
-                return Ok("Added to Favorite");
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
-
+            await _FavoriteService.AddBookmarkAsync(favorite);
+            return Ok("Added to Bookmarks");
         }
 
         [Authorize]
-        [HttpGet("GetFavorites")]
+        [HttpGet("GetBookmarkes")]
 
-        public async Task<IActionResult> GetFavorites()
+        public async Task<IActionResult> GetBookmarkes()
         {
-            var Favorite = await _FavoriteService.GetFavoritesAsync();
+            var Favorite = await _FavoriteService.GetBookmarkesAsync();
             return Ok(Favorite);
         }
 
+        [Authorize]
+        [HttpDelete("DeleteBookmark/{id}")]
+        public async Task<IActionResult> DeleteBookmark(int id)
+        {
+            var favorite = await _FavoriteService.DeleteBookmarkAsync(id, _httpContextAccessor.HttpContext.Session);
+
+            if (favorite == null)
+                return BadRequest("Invalid data for Bookmark");
+            {
+                return Ok(new { message = "Bookmark removed successfully", favorite });
+            }
+
+        }
     }
 }

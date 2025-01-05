@@ -1,6 +1,7 @@
 ﻿using BL.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Shared.Models;
 
 namespace GitRepositoriesApi.Controllers
 {
@@ -9,9 +10,12 @@ namespace GitRepositoriesApi.Controllers
     public class RepositoriesController : ControllerBase
     {
         private readonly IGitHubService _gitHubService;
-        public RepositoriesController(IGitHubService gitHubService)
+        private readonly IEmailSender _emailSender;
+
+        public RepositoriesController(IGitHubService gitHubService, IEmailSender emailSender)
         {
             _gitHubService = gitHubService;
+            _emailSender = emailSender;
         }
 
         [Authorize]
@@ -34,6 +38,28 @@ namespace GitRepositoriesApi.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, $"An error occurred: {ex.Message}");
+            }
+        }
+
+
+
+
+        [HttpPost("sendEmail")]
+        public async Task<IActionResult> SendEmail([FromBody] Email email)
+        {
+            if (string.IsNullOrWhiteSpace(email.repositoryName))
+                return BadRequest("Repository name cannot be empty.");
+            if (string.IsNullOrWhiteSpace(email.recipientEmail))
+                return BadRequest("Recipient email cannot be empty.");
+
+            try
+            {
+                await _emailSender.SendEmail(email.recipientEmail, email.repositoryName);
+                return Ok($"Email sent successfully to: {email.recipientEmail} for repository: {email.repositoryName}");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"An error occurred while sending the email: {ex.Message}");
             }
         }
     }

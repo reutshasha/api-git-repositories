@@ -5,11 +5,11 @@ using DAL.Contexts;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using Microsoft.Extensions.Configuration;
 using GitRepositoriesApi.Middelwares;
 using BL.AuthManager;
 using BL.Interfaces;
 using BL.Entities;
+using GitRepositoriesApi.Utilities;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -96,8 +96,19 @@ builder.Services.AddAuthentication(options =>
 });
 builder.Services.AddAuthorization();
 builder.Services.AddScoped<IAuthManager, AuthManager>();
-builder.Services.AddScoped<BL.Interfaces.ILogService, BL.Services.LogService>();
+builder.Services.AddScoped<ILogService, LogService>();
+builder.Services.AddSingleton<IAuthManager, AuthManager>();
+builder.Services.AddScoped<IEmailSender, EmailSender>();
+builder.Services.AddHttpContextAccessor();
 
+// Session
+builder.Services.AddDistributedMemoryCache(); 
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30); 
+    options.Cookie.HttpOnly = true; 
+    options.Cookie.IsEssential = true; 
+});
 
 var app = builder.Build();
 
@@ -115,7 +126,7 @@ app.UseMiddleware<ExceptionMiddleware>();
 
 app.UseAuthentication();
 app.UseAuthorization();
-
+app.UseSession();
 app.MapControllers();
 
 app.Run();

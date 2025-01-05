@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using BL.Interfaces;
+using Newtonsoft.Json;
 using System.Net;
 
 namespace GitRepositoriesApi.Middelwares
@@ -7,11 +8,14 @@ namespace GitRepositoriesApi.Middelwares
     {
         private readonly RequestDelegate _next;
         private readonly ILogger<ExceptionMiddleware> _logger;
+        private readonly IAuthManager _authManager;
 
-        public ExceptionMiddleware(RequestDelegate next, ILogger<ExceptionMiddleware> logger)
+        public ExceptionMiddleware(RequestDelegate next, ILogger<ExceptionMiddleware> logger, IAuthManager authManager)
         {
             _next = next;
             _logger = logger;
+            _authManager = authManager;
+
         }
 
         public async Task InvokeAsync(HttpContext context)
@@ -33,20 +37,29 @@ namespace GitRepositoriesApi.Middelwares
 
             HttpStatusCode statusCode;
             string errorType;
+            string message;
 
             switch (exception)
             {
                 case ArgumentException _:
                     statusCode = HttpStatusCode.BadRequest;
                     errorType = "BadRequest";
+                    message = "Invalid input provided.";
                     break;
                 case KeyNotFoundException _:
                     statusCode = HttpStatusCode.NotFound;
                     errorType = "NotFound";
+                    message = "The requested resource was not found.";
+                    break;
+                case UnauthorizedAccessException _:
+                    statusCode = HttpStatusCode.Unauthorized;
+                    errorType = "Unauthorized";
+                    message = "Invalid or expired token.";
                     break;
                 default:
                     statusCode = HttpStatusCode.InternalServerError;
                     errorType = "InternalServerError";
+                    message = "An unexpected error occurred.";
                     break;
             }
 
@@ -56,7 +69,8 @@ namespace GitRepositoriesApi.Middelwares
             {
                 StatusCode = context.Response.StatusCode,
                 Error = errorType,
-                Message = exception.Message
+                Message = message,
+                DetailedMessage = exception.Message
             }));
         }
     }
